@@ -464,6 +464,15 @@ const SaveLoadControls = ({ onSave, onLoad, onReset, currentTheme, onThemeChange
           React.createElement(RefreshIcon, { className: "w-4 h-4 sm:w-5 sm:h-5" }), React.createElement('span', {className: "hidden sm:inline"}, "リセット")
         )
       )
+    ),
+    React.createElement('div', { className: "text-sm" }, 
+      React.createElement('a', ({
+        href: "./gamedatamaker.html",
+        target: "_blank",
+        rel: "noopener noreferrer",
+        className: "accent-sky-text hover:underline",
+        title: "ゲームデータ作成ツール (gamedatamaker.html) を開きます"
+      } as React.AnchorHTMLAttributes<HTMLAnchorElement>), "ゲームデータ(SRGD)作成ツールはこちら")
     )
   );
 };
@@ -2642,3 +2651,4 @@ console.log("index.js: Root element found. Creating React root and rendering App
 const root = createRoot(container);
 root.render(React.createElement(StrictMode, null, React.createElement(App)));
 console.log("index.js: App rendering initiated.");
+    

@@ -1,0 +1,861 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ソロRPGコンパニオン用セッティング作成ツール</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom scrollbar for a cleaner look */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+    body {
+      font-family: 'Inter', sans-serif; /* A nice sans-serif font */
+    }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/client": "https://esm.sh/react-dom@^19.1.0/client",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/"
+  }
+}
+</script>
+  <!-- Babel Standalone for in-browser JSX/TS transpilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Babel Configuration -->
+  <script type="text/babel-config">
+    {
+      "presets": [
+        ["env", { "modules": false }],
+        "react",
+        "typescript"
+      ],
+      "plugins": []
+    }
+  </script>
+</head>
+<body class="bg-slate-900 text-slate-100">
+  <div id="root"></div>
+  <script type="text/babel" data-type="module">
+    // External library imports
+    import React, { useState, useCallback, StrictMode } from 'react';
+    import ReactDOM from 'react-dom/client';
+
+    // --- Content from utils/idUtils.ts ---
+    const generateUniqueId = (prefix = 'id') => {
+      return `${prefix}_${crypto.randomUUID()}`;
+    };
+
+    // --- Content from types.ts (Enums only) ---
+    // CustomFieldType is still used internally, but not selectable by user.
+    const CustomFieldType = {
+      TEXT: "text",
+      TEXTAREA: "textarea",
+      NUMBER: "number",
+    };
+
+    // --- Content from components/shared/IconButton.tsx ---
+    const AddIcon = ({className}) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-5 h-5 ${className}`}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+    );
+
+    const RemoveIcon = ({className}) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-5 h-5 ${className}`}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
+      </svg>
+    );
+
+    const ChevronDownIcon = ({className}) => (
+     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-5 h-5 ${className}`}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+      </svg>
+    );
+
+    const ChevronUpIcon = ({className}) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-5 h-5 ${className}`}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+      </svg>
+    );
+    
+    const IconButton = ({ icon, variant = 'primary', className, ...props }) => {
+      const baseClasses = "p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 transition-colors duration-150";
+      const variantClasses = {
+        primary: "bg-sky-600 hover:bg-sky-700 text-white focus:ring-sky-500",
+        danger: "bg-red-600 hover:bg-red-700 text-white focus:ring-red-500",
+        ghost: "bg-transparent hover:bg-slate-700 text-slate-300 focus:ring-slate-500",
+      };
+
+      return (
+        <button
+          type="button"
+          className={`${baseClasses} ${variantClasses[variant]} ${className || ''}`}
+          {...props}
+        >
+          {icon}
+        </button>
+      );
+    };
+
+    // --- Content from components/shared/FormField.tsx ---
+    const FormField = ({ label, id, children, className = '', tooltip }) => {
+      return (
+        <div className={`mb-4 ${className}`}>
+          <label htmlFor={id} className="block text-sm font-medium text-slate-300 mb-1">
+            {label}
+            {tooltip && (
+              <span title={tooltip} className="ml-1 text-sky-400 cursor-help">(?)</span>
+            )}
+          </label>
+          {children}
+        </div>
+      );
+    };
+    
+    // --- Content from components/shared/CollapsibleSection.tsx ---
+    const CollapsibleSection = ({ title, children, defaultOpen = false }) => {
+      const [isOpen, setIsOpen] = useState(defaultOpen);
+
+      return (
+        <div className="mb-6 border border-slate-700 rounded-lg shadow-md">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-full flex justify-between items-center p-4 bg-slate-800 hover:bg-slate-700 rounded-t-lg focus:outline-none"
+            aria-expanded={isOpen}
+          >
+            <h2 className="text-xl font-semibold text-sky-400">{title}</h2>
+            {isOpen ? <ChevronUpIcon className="text-slate-400" /> : <ChevronDownIcon className="text-slate-400" />}
+          </button>
+          {isOpen && (
+            <div className="p-4 bg-slate-800/50 rounded-b-lg">
+              {children}
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    // --- Content from components/shared/ArrayEditor.tsx ---
+    function ArrayEditor({
+      items,
+      onChange,
+      generateNewItem,
+      renderItem,
+      itemTitle,
+      addButtonLabel
+    }) {
+      const handleAddItem = () => {
+        onChange([...items, generateNewItem()]);
+      };
+
+      const handleRemoveItem = (indexToRemove) => {
+        onChange(items.filter((_, index) => index !== indexToRemove));
+      };
+
+      const handleChangeItem = (indexToChange, updatedItem) => {
+        onChange(items.map((item, index) => (index === indexToChange ? updatedItem : item)));
+      };
+
+      return (
+        <div>
+          {items.map((item, index) => (
+            <div key={item.id || index} className="mb-4 p-4 border border-slate-700 rounded-lg relative bg-slate-800/30">
+              {renderItem(
+                item,
+                index,
+                (updatedItem) => handleChangeItem(index, updatedItem),
+                () => handleRemoveItem(index)
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={handleAddItem}
+            className="mt-2 flex items-center px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-md text-sm font-medium transition-colors"
+          >
+            <AddIcon className="mr-2" />
+            {addButtonLabel || `Add New ${itemTitle}`}
+          </button>
+        </div>
+      );
+    }
+
+    // --- Content from components/ManifestEditor.tsx ---
+    const ManifestEditor = ({ data, onChange }) => {
+      const handleChange = (e) => {
+        onChange({ ...data, [e.target.name]: e.target.value });
+      };
+
+      return (
+        <div className="space-y-4">
+          <FormField label="ゲームタイトル (必須)" id="gameTitle">
+            <input
+              type="text"
+              id="gameTitle"
+              name="gameTitle"
+              value={data.gameTitle}
+              onChange={handleChange}
+              required
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+            />
+          </FormField>
+          <FormField label="作成者" id="author">
+            <input
+              type="text"
+              id="author"
+              name="author"
+              value={data.author}
+              onChange={handleChange}
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+            />
+          </FormField>
+          <FormField label="バージョン" id="version">
+            <input
+              type="text"
+              id="version"
+              name="version"
+              value={data.version}
+              onChange={handleChange}
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+            />
+          </FormField>
+          <FormField label="説明" id="description">
+            <textarea
+              id="description"
+              name="description"
+              value={data.description}
+              onChange={handleChange}
+              rows={3}
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+            />
+          </FormField>
+          <FormField label="SRGDバージョン (推奨: 1.0)" id="srgdVersion">
+            <input
+              type="text"
+              id="srgdVersion"
+              name="srgdVersion"
+              value={data.srgdVersion}
+              onChange={handleChange}
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+            />
+          </FormField>
+        </div>
+      );
+    };
+
+    // --- Content from components/CustomFieldTemplateEditor.tsx ---
+    const CustomFieldTemplateEditor = ({ field, onChange, onRemove, index }) => {
+      const handleChange = (e) => {
+        // Type is now fixed, only label changes
+        onChange({ ...field, label: e.target.value });
+      };
+
+      return (
+        <div className="flex items-end gap-2">
+          <FormField label="ラベル (必須)" id={`cft-label-${index}`} className="flex-grow">
+            <input
+              type="text"
+              id={`cft-label-${index}`}
+              name="label" // Name attribute might still be useful for consistency or future dev
+              value={field.label}
+              onChange={handleChange}
+              required
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+              placeholder="例: 特技、メモ"
+            />
+          </FormField>
+          <IconButton 
+            onClick={onRemove} 
+            icon={<RemoveIcon />} 
+            variant="danger" 
+            aria-label="カスタムフィールドを削除" 
+            className="h-10 mb-4" // Align with FormField's typical bottom margin
+          />
+        </div>
+      );
+    };
+    
+    // --- Content from components/CharacterSheetEditor.tsx ---
+    const CharacterSheetEditor = ({ data, onChange }) => {
+      const handleStatsLabelChange = (e) => {
+        onChange({ ...data, statsLabel: e.target.value });
+      };
+
+      const handleCustomFieldsChange = (newCustomFields) => {
+        onChange({ ...data, customFieldTemplates: newCustomFields });
+      };
+      
+      const generateNewCustomField = () => ({
+        id: generateUniqueId('cft'),
+        label: '新しいカスタムフィールド',
+        type: CustomFieldType.TEXTAREA, // Default to TEXTAREA
+      });
+
+      return (
+        <div className="space-y-6">
+          <FormField label="能力値・詳細エリアのラベル" id="statsLabelCS">
+            <input
+              type="text"
+              id="statsLabelCS"
+              value={data.statsLabel}
+              onChange={handleStatsLabelChange}
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+            />
+          </FormField>
+
+          <div>
+            <h3 className="text-lg font-medium text-slate-300 mb-2">カスタムフィールドテンプレート</h3>
+            <ArrayEditor
+              items={data.customFieldTemplates}
+              onChange={handleCustomFieldsChange}
+              generateNewItem={generateNewCustomField}
+              itemTitle="カスタムフィールド"
+              renderItem={(field, index, onChangeItem, onRemoveItem) => (
+                <CustomFieldTemplateEditor
+                  field={field}
+                  onChange={onChangeItem}
+                  onRemove={onRemoveItem}
+                  index={index} // index might still be useful for unique IDs or aria attributes
+                />
+              )}
+            />
+          </div>
+        </div>
+      );
+    };
+
+    // --- Content from components/RulebookSectionEditor.tsx ---
+    const RulebookSectionEditor = ({ section, onChange, onRemove, index }) => {
+      const handleChange = (e) => {
+        onChange({ ...section, [e.target.name]: e.target.value });
+      };
+
+      return (
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <IconButton onClick={onRemove} icon={<RemoveIcon />} variant="danger" aria-label="ルールブックセクションを削除"/>
+          </div>
+          <FormField label="タイトル (必須)" id={`rb-title-${section.id || index}`}>
+            <input
+              type="text"
+              id={`rb-title-${section.id || index}`}
+              name="title"
+              value={section.title}
+              onChange={handleChange}
+              required
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+            />
+          </FormField>
+          <FormField label="内容 (必須)" id={`rb-content-${section.id || index}`}>
+            <textarea
+              id={`rb-content-${section.id || index}`}
+              name="content"
+              value={section.content}
+              onChange={handleChange}
+              required
+              rows={5}
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+              placeholder="ルール内容を入力してください。改行は保持されます。"
+            />
+          </FormField>
+        </div>
+      );
+    };
+
+    // --- Content from components/RulebookEditor.tsx ---
+    const RulebookEditor = ({ data, onChange }) => {
+      const handleRulebookSectionsChange = (newSections) => {
+        onChange(newSections);
+      };
+
+      const generateNewRulebookSection = () => ({
+        id: generateUniqueId('rule'),
+        title: '新しいルールセクション',
+        content: '',
+      });
+
+      return (
+        <ArrayEditor
+          items={data}
+          onChange={handleRulebookSectionsChange}
+          generateNewItem={generateNewRulebookSection}
+          itemTitle="ルールブックセクション"
+          renderItem={(section, index, onChangeItem, onRemoveItem) => (
+            <RulebookSectionEditor
+              section={section}
+              onChange={onChangeItem}
+              onRemove={onRemoveItem}
+              index={index}
+            />
+          )}
+        />
+      );
+    };
+
+    // --- Content from components/RandomTableEntryEditor.tsx ---
+    const RandomTableEntryEditor = ({ entry, onChange, onRemove, index, diceCommandPresent }) => {
+      const handleChange = (e) => {
+        onChange({ ...entry, [e.target.name]: e.target.value });
+      };
+      const uniqueIdPrefix = `rte-${entry.id || index}`; 
+
+      return (
+        <div className="p-3 bg-slate-700/50 rounded-md border border-slate-600">
+           <div className="flex justify-end mb-2">
+            <IconButton onClick={onRemove} icon={<RemoveIcon />} variant="danger" aria-label="テーブル項目を削除"/>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
+            {diceCommandPresent && (
+              <FormField label="出目 (例: 1, 2-3, 4+)" id={`${uniqueIdPrefix}-rollValue`}>
+                <input
+                  type="text"
+                  id={`${uniqueIdPrefix}-rollValue`}
+                  name="rollValue"
+                  value={entry.rollValue || ''}
+                  onChange={handleChange}
+                  className="w-full p-2 bg-slate-600 border border-slate-500 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+                  placeholder="ダイスコマンド設定時必須"
+                />
+              </FormField>
+            )}
+            <FormField 
+              label="内容 (必須)" 
+              id={`${uniqueIdPrefix}-value`} 
+              className={diceCommandPresent ? 'md:col-span-1' : 'md:col-span-2'}
+            >
+              <input
+                type="text"
+                id={`${uniqueIdPrefix}-value`}
+                name="value"
+                value={entry.value}
+                onChange={handleChange}
+                required
+                className="w-full p-2 bg-slate-600 border border-slate-500 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+              />
+            </FormField>
+          </div>
+        </div>
+      );
+    };
+    
+    // --- Content from components/RandomTableItemEditor.tsx ---
+    const RandomTableItemEditor = ({ table, onChange, onRemove, index }) => {
+      const handleChange = (e) => {
+        onChange({ ...table, [e.target.name]: e.target.value });
+      };
+
+      const handleEntriesChange = (newEntries) => {
+        onChange({ ...table, entries: newEntries });
+      };
+
+      const generateNewEntry = () => ({
+        id: generateUniqueId('entry'), 
+        value: '新しい項目',
+        ...(table.diceCommand && table.diceCommand.trim() !== '' && { rollValue: '' }),
+      });
+      
+      const diceCommandPresent = !!table.diceCommand && table.diceCommand.trim() !== '';
+
+      return (
+        <div className="space-y-4">
+          <div className="flex justify-between items-start">
+            <h4 className="text-md font-semibold text-sky-300 mb-1">編集中テーブル: {table.name || `テーブル ${index + 1}`}</h4>
+            <IconButton onClick={onRemove} icon={<RemoveIcon />} variant="danger" aria-label="ランダムテーブルを削除"/>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField label="テーブル名 (必須)" id={`rt-name-${table.id || index}`}>
+              <input
+                type="text"
+                id={`rt-name-${table.id || index}`}
+                name="name"
+                value={table.name}
+                onChange={handleChange}
+                required
+                className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+              />
+            </FormField>
+            <FormField label="ダイスコマンド (任意, 例: 1d6)" id={`rt-diceCommand-${table.id || index}`}>
+              <input
+                type="text"
+                id={`rt-diceCommand-${table.id || index}`}
+                name="diceCommand"
+                value={table.diceCommand || ''}
+                onChange={handleChange}
+                className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+              />
+            </FormField>
+          </div>
+          
+          <div>
+            <h5 className="text-sm font-medium text-slate-300 mb-2">テーブル項目</h5>
+            <ArrayEditor
+              items={table.entries}
+              onChange={handleEntriesChange}
+              generateNewItem={generateNewEntry}
+              itemTitle="テーブル項目"
+              addButtonLabel="新しい項目を追加"
+              renderItem={(entry, entryIndex, onChangeEntry, onRemoveEntry) => (
+                <RandomTableEntryEditor
+                  entry={entry}
+                  onChange={onChangeEntry}
+                  onRemove={onRemoveEntry}
+                  index={entryIndex}
+                  diceCommandPresent={diceCommandPresent}
+                />
+              )}
+            />
+          </div>
+        </div>
+      );
+    };
+
+    // --- Content from components/RandomTablesEditor.tsx ---
+    const RandomTablesEditor = ({ data, onChange }) => {
+      const handleRandomTablesChange = (newTables) => {
+        onChange(newTables);
+      };
+
+      const generateNewRandomTable = () => ({
+        id: generateUniqueId('table'),
+        name: '新しいランダムテーブル',
+        entries: [],
+      });
+
+      return (
+        <ArrayEditor
+          items={data}
+          onChange={handleRandomTablesChange}
+          generateNewItem={generateNewRandomTable}
+          itemTitle="ランダムテーブル"
+          renderItem={(table, index, onChangeItem, onRemoveItem) => (
+            <RandomTableItemEditor
+              table={table}
+              onChange={onChangeItem}
+              onRemove={onRemoveItem}
+              index={index}
+            />
+          )}
+        />
+      );
+    };
+
+    // --- Content from components/ResourceTrackerTemplateEditor.tsx ---
+    const ResourceTrackerTemplateEditor = ({ tracker, onChange, onRemove, index }) => {
+      const handleChange = (e) => {
+        const { name, value, type } = e.target;
+        onChange({
+          ...tracker,
+          [name]: type === 'number' ? parseInt(value, 10) || 0 : value,
+        });
+      };
+
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+          <FormField label="リソース名 (必須)" id={`rtt-name-${tracker.id || index}`}>
+            <input
+              type="text"
+              id={`rtt-name-${tracker.id || index}`}
+              name="name"
+              value={tracker.name}
+              onChange={handleChange}
+              required
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+            />
+          </FormField>
+          <FormField label="初期値 (必須)" id={`rtt-initialValue-${tracker.id || index}`}>
+            <input
+              type="number"
+              id={`rtt-initialValue-${tracker.id || index}`}
+              name="initialValue"
+              value={tracker.initialValue}
+              onChange={handleChange}
+              required
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+            />
+          </FormField>
+          <div className="md:col-span-2 flex justify-end">
+            <IconButton onClick={onRemove} icon={<RemoveIcon />} variant="danger" aria-label="リソーストラッカーを削除" className="h-10" />
+          </div>
+        </div>
+      );
+    };
+
+    // --- Content from components/ResourceTrackersEditor.tsx ---
+    const ResourceTrackersEditor = ({ data, onChange }) => {
+      const handleResourceTrackersChange = (newTrackers) => {
+        onChange(newTrackers);
+      };
+
+      const generateNewResourceTracker = () => ({
+        id: generateUniqueId('res'),
+        name: '新しいリソース',
+        initialValue: 0,
+      });
+
+      return (
+        <ArrayEditor
+          items={data}
+          onChange={handleResourceTrackersChange}
+          generateNewItem={generateNewResourceTracker}
+          itemTitle="リソーストラッカー"
+          renderItem={(tracker, index, onChangeItem, onRemoveItem) => (
+            <ResourceTrackerTemplateEditor
+              tracker={tracker}
+              onChange={onChangeItem}
+              onRemove={onRemoveItem}
+              index={index}
+            />
+          )}
+        />
+      );
+    };
+
+    // --- Content from App.tsx ---
+    const initialSrgdData = {
+      manifest: {
+        gameTitle: "剣と魔法の冒険",
+        author: "ゲームマスター太郎",
+        version: "1.0.0",
+        description: "これは剣と魔法のファンタジー世界を舞台にした冒険のサンプルデータです。",
+        srgdVersion: "1.0"
+      },
+      characterSheetTemplate: {
+        statsLabel: "能力値・詳細",
+        customFieldTemplates: [
+          {
+            id: generateUniqueId("cft_background"),
+            label: "キャラクターの背景",
+            type: CustomFieldType.TEXTAREA // Ensure type is TEXTAREA
+          },
+          {
+            id: generateUniqueId("cft_equipment"),
+            label: "装備",
+            type: CustomFieldType.TEXTAREA // Ensure type is TEXTAREA
+          }
+          // "所持金" (Gold/Money) entry removed
+        ]
+      },
+      rulebookSections: [
+        {
+          id: generateUniqueId("rule_combat"),
+          title: "戦闘ルール",
+          content: "ここに戦闘に関するルールを記述します。\n改行もそのまま反映されます。"
+        },
+        {
+          id: generateUniqueId("rule_magic"),
+          title: "魔法ルール",
+          content: "魔法に関する詳細なルールを記述します。"
+        }
+      ],
+      randomTables: [
+        {
+          id: generateUniqueId("table_forest_encounter"),
+          name: "森の遭遇表",
+          diceCommand: "1d6",
+          entries: [
+            { id: generateUniqueId("entry_forest1"), rollValue: "1-2", value: "ゴブリンの群れに遭遇！" },
+            { id: generateUniqueId("entry_forest2"), rollValue: "3-4", value: "旅の商人と出会う。" },
+            { id: generateUniqueId("entry_forest3"), rollValue: "5", value: "古い遺跡を発見。" },
+            { id: generateUniqueId("entry_forest4"), rollValue: "6+", value: "巨大な熊が出現！" }
+          ]
+        },
+        {
+          id: generateUniqueId("table_rumors"),
+          name: "街の噂",
+          entries: [
+            { id: generateUniqueId("entry_rumor1"), value: "「王様の隠し財産の話、聞いたことあるかい？」" },
+            { id: generateUniqueId("entry_rumor2"), value: "「最近、東の森で奇妙な光を見た者がいるらしい。」" }
+          ]
+        }
+      ],
+      resourceTrackerTemplates: [
+        {
+          id: generateUniqueId("res_hp"),
+          name: "ヒットポイント(HP)",
+          initialValue: 10
+        },
+        {
+          id: generateUniqueId("res_mp"),
+          name: "マジックポイント(MP)",
+          initialValue: 20
+        }
+      ]
+    };
+
+    const App = () => {
+      const [srgdData, setSrgdData] = useState(initialSrgdData);
+      const [fileName, setFileName] = useState(initialSrgdData.manifest.gameTitle.toLowerCase().replace(/\s+/g, '_') || 'ゲームデータ');
+
+      const handleManifestChange = useCallback((newManifest) => {
+        setSrgdData(prev => ({ ...prev, manifest: newManifest }));
+        if (newManifest.gameTitle !== srgdData.manifest.gameTitle) {
+          setFileName(newManifest.gameTitle.toLowerCase().replace(/\s+/g, '_') || 'ゲームデータ');
+        }
+      }, [srgdData.manifest.gameTitle]);
+
+      const handleCharacterSheetChange = useCallback((newSheet) => {
+        setSrgdData(prev => ({ ...prev, characterSheetTemplate: newSheet }));
+      }, []);
+
+      const handleRulebookChange = useCallback((newSections) => {
+        setSrgdData(prev => ({ ...prev, rulebookSections: newSections }));
+      }, []);
+
+      const handleRandomTablesChange = useCallback((newTables) => {
+        setSrgdData(prev => ({ ...prev, randomTables: newTables }));
+      }, []);
+
+      const handleResourceTrackersChange = useCallback((newTrackers) => {
+        setSrgdData(prev => ({ ...prev, resourceTrackerTemplates: newTrackers }));
+      }, []);
+
+      const handleDownload = () => {
+        const jsonString = JSON.stringify(srgdData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const safeFileName = fileName.replace(/[^a-z0-9_.\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf]/gi, '_') || 'ゲームデータ';
+        a.download = `${safeFileName}.srgd`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+      
+      const loadExampleData = () => {
+        const exampleDataCopy = JSON.parse(JSON.stringify(initialSrgdData)); 
+        exampleDataCopy.manifest.gameTitle = initialSrgdData.manifest.gameTitle;
+
+        if (exampleDataCopy.characterSheetTemplate.customFieldTemplates) {
+          exampleDataCopy.characterSheetTemplate.customFieldTemplates.forEach(cft => {
+            cft.id = generateUniqueId(cft.id.substring(0, cft.id.lastIndexOf('_')) || 'cft');
+            cft.type = CustomFieldType.TEXTAREA; // Ensure example data also uses TEXTAREA
+          });
+        }
+        // Remove "所持金" from example data if it somehow got re-added
+        if (exampleDataCopy.characterSheetTemplate.customFieldTemplates) {
+            exampleDataCopy.characterSheetTemplate.customFieldTemplates = 
+                exampleDataCopy.characterSheetTemplate.customFieldTemplates.filter(
+                    field => field.label !== "所持金"
+                );
+        }
+
+
+        if (exampleDataCopy.rulebookSections) {
+          exampleDataCopy.rulebookSections.forEach(rs => rs.id = generateUniqueId(rs.id.substring(0, rs.id.lastIndexOf('_')) || 'rule'));
+        }
+        if (exampleDataCopy.randomTables) {
+          exampleDataCopy.randomTables.forEach(rt => {
+            rt.id = generateUniqueId(rt.id.substring(0, rt.id.lastIndexOf('_')) || 'table');
+            if (rt.entries) {
+              rt.entries.forEach(entry => entry.id = generateUniqueId(entry.id.substring(0, entry.id.lastIndexOf('_')) || 'entry'));
+            }
+          });
+        }
+        if (exampleDataCopy.resourceTrackerTemplates) {
+          exampleDataCopy.resourceTrackerTemplates.forEach(rtt => rtt.id = generateUniqueId(rtt.id.substring(0, rtt.id.lastIndexOf('_')) || 'res'));
+        }
+        
+        setSrgdData(exampleDataCopy);
+        setFileName(exampleDataCopy.manifest.gameTitle.toLowerCase().replace(/\s+/g, '_') || 'ゲームデータ');
+      };
+
+      return (
+        <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">
+          <header className="mb-8 text-center">
+            <h1 className="text-4xl font-bold text-sky-400">ソロRPGコンパニオン用セッティング作成ツール</h1>
+            <p className="text-slate-400 mt-2">ソロRPGコンパニオンアプリ用のゲーム設定を作成し、SRGDファイルとしてエクスポートします。</p>
+          </header>
+
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-6 p-4 bg-slate-800 rounded-lg shadow-lg flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="flex-grow">
+                <label htmlFor="fileName" className="block text-sm font-medium text-slate-300 mb-1">出力ファイル名 (.srgd)</label>
+                <input
+                  type="text"
+                  id="fileName"
+                  value={fileName}
+                  onChange={(e) => setFileName(e.target.value)}
+                  placeholder="ゲームデータ"
+                  className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500 text-slate-100"
+                />
+              </div>
+              <div className="flex gap-2 mt-2 sm:mt-0 self-end sm:self-center">
+                <button
+                  onClick={loadExampleData}
+                  className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-md transition-colors h-10"
+                >
+                  サンプル読込
+                </button>
+                <button
+                  onClick={handleDownload}
+                  className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-md shadow-md transition-colors h-10"
+                >
+                  SRGDダウンロード
+                </button>
+              </div>
+            </div>
+
+            <CollapsibleSection title="マニフェスト" defaultOpen={true}>
+              <ManifestEditor data={srgdData.manifest} onChange={handleManifestChange} />
+            </CollapsibleSection>
+
+            <CollapsibleSection title="キャラクターシートテンプレート">
+              <CharacterSheetEditor data={srgdData.characterSheetTemplate} onChange={handleCharacterSheetChange} />
+            </CollapsibleSection>
+
+            <CollapsibleSection title="ルールブックセクション">
+              <RulebookEditor data={srgdData.rulebookSections} onChange={handleRulebookChange} />
+            </CollapsibleSection>
+
+            <CollapsibleSection title="ランダムテーブル">
+              <RandomTablesEditor data={srgdData.randomTables} onChange={handleRandomTablesChange} />
+            </CollapsibleSection>
+
+            <CollapsibleSection title="リソーストラッカーテンプレート">
+              <ResourceTrackersEditor data={srgdData.resourceTrackerTemplates} onChange={handleResourceTrackersChange} />
+            </CollapsibleSection>
+            
+            <div className="mt-8 text-center text-slate-500 text-sm">
+              SRGDエディタ v1.0.0
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // --- ReactDOM rendering (from index.tsx) ---
+    const rootElement = document.getElementById('root');
+    if (!rootElement) {
+      throw new Error("Could not find root element to mount to");
+    }
+
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(
+      <StrictMode>
+        <App />
+      </StrictMode>
+    );
+
+  </script>
+</body>
+</html>

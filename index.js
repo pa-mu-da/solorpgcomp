@@ -19905,6 +19905,17 @@
             import_react2.default.createElement("span", { className: "hidden sm:inline" }, "\u30EA\u30BB\u30C3\u30C8")
           )
         )
+      ),
+      import_react2.default.createElement(
+        "div",
+        { className: "text-sm" },
+        import_react2.default.createElement("a", {
+          href: "./gamedatamaker.html",
+          target: "_blank",
+          rel: "noopener noreferrer",
+          className: "accent-sky-text hover:underline",
+          title: "\u30B2\u30FC\u30E0\u30C7\u30FC\u30BF\u4F5C\u6210\u30C4\u30FC\u30EB (gamedatamaker.html) \u3092\u958B\u304D\u307E\u3059"
+        }, "\u30B2\u30FC\u30E0\u30C7\u30FC\u30BF(SRGD)\u4F5C\u6210\u30C4\u30FC\u30EB\u306F\u3053\u3061\u3089")
       )
     );
   };
