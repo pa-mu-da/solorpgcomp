@@ -1,0 +1,337 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Solo RPG Companion</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+          /* Base scrollbar styles (will be overridden by themes) */
+          ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+          }
+          ::-webkit-scrollbar-track {
+            background: #2d3748; /* Default dark track */
+          }
+          ::-webkit-scrollbar-thumb {
+            background: #4a5568; /* Default dark thumb */
+            border-radius: 4px;
+          }
+          ::-webkit-scrollbar-thumb:hover {
+            background: #718096; /* Default dark thumb hover */
+          }
+          .error-message {
+            color: #f87171; /* red-400 */
+            background-color: #4a5568; /* slate-600 */
+            border: 1px solid #f87171; /* red-400 */
+            padding: 15px;
+            margin: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+          }
+
+          /* CSS for Image Mask Icons */
+          .icon-mask {
+            display: inline-block; /* Or block if preferred */
+            width: 1em; /* Default, overridden by Tailwind usually */
+            height: 1em; /* Default, overridden by Tailwind usually */
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            background-color: currentColor; /* This is key for theme-based coloring */
+          }
+
+
+          /* Theme CSS Overrides */
+          /* Default (Dark Theme - applied via class 'dark' on html) */
+          html.dark {
+            --bg-primary: #0f172a; /* slate-900 */
+            --bg-secondary: #1e293b; /* slate-800 */
+            --bg-tertiary: #334155; /* slate-700 */
+            --bg-tertiary-hover: #475569; /* slate-600 */
+            --text-primary: #f1f5f9; /* slate-100 */
+            --text-secondary: #cbd5e1; /* slate-300 */
+            --text-muted: #94a3b8; /* slate-400 */
+            --border-primary: #475569; /* slate-600 */
+            --border-secondary: #334155; /* slate-700 */
+            --accent-sky: #38bdf8; /* sky-400 */
+            --accent-teal: #2dd4bf; /* teal-400 */
+            --accent-green: #34d399; /* green-400 */
+            --accent-red: #f87171; /* red-400 */
+            --accent-blue: #60a5fa; /* blue-400 */
+            --accent-yellow: #facc15; /* yellow-400 */
+            --accent-purple: #c084fc; /* purple-400 */
+            --button-primary-bg: var(--accent-sky);
+            --button-primary-hover-bg: #0ea5e9; /* sky-500 */
+            --button-secondary-bg: var(--accent-teal);
+            --button-secondary-hover-bg: #14b8a6; /* teal-500 */
+          }
+          html.dark ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+          html.dark ::-webkit-scrollbar-thumb { background: var(--border-primary); }
+          html.dark ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+
+          /* Light Theme */
+          html.theme-light {
+            --bg-primary: #f8fafc; /* slate-50 */
+            --bg-secondary: #f1f5f9; /* slate-100 */
+            --bg-tertiary: #e2e8f0; /* slate-200 */
+            --bg-tertiary-hover: #cbd5e1; /* slate-300 */
+            --text-primary: #0f172a; /* slate-900 */
+            --text-secondary: #334155; /* slate-700 */
+            --text-muted: #64748b; /* slate-500 */
+            --border-primary: #cbd5e1; /* slate-300 */
+            --border-secondary: #94a3b8; /* slate-400 */
+            --accent-sky: #0284c7; /* sky-600 */
+            --accent-teal: #0d9488; /* teal-600 */
+            --accent-green: #16a34a; /* green-600 */
+            --accent-red: #dc2626; /* red-600 */
+            --accent-blue: #2563eb; /* blue-600 */
+            --accent-yellow: #ca8a04; /* yellow-600 */
+            --accent-purple: #7c3aed; /* purple-600 */
+            --button-primary-bg: var(--accent-sky);
+            --button-primary-hover-bg: #0369a1; /* sky-700 */
+            --button-secondary-bg: var(--accent-teal);
+            --button-secondary-hover-bg: #0f766e; /* teal-700 */
+          }
+          html.theme-light body { background-color: var(--bg-primary); color: var(--text-primary); }
+          html.theme-light ::-webkit-scrollbar-track { background: var(--bg-tertiary); }
+          html.theme-light ::-webkit-scrollbar-thumb { background: var(--border-secondary); }
+          html.theme-light ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+          /* Earth Theme */
+          html.theme-earth {
+            --bg-primary: #2a2017; 
+            --bg-secondary: #4d4033;
+            --bg-tertiary: #6b5a4c;
+            --bg-tertiary-hover: #5a442b; 
+            --text-primary: #f3eade;
+            --text-secondary: #d4c2ad;
+            --text-muted: #a18870;
+            --border-primary: #806040;
+            --border-secondary: #5a442b;
+            --accent-amber: #f59e0b; /* amber-500 */
+            --accent-lime: #65a30d; /* lime-600 */
+            --accent-sky: var(--accent-amber); /* Re-map sky to amber for earth */
+            --accent-teal: var(--accent-lime); /* Re-map teal to lime for earth */
+            --accent-green: #84cc16; /* lime-500 */
+            --accent-red: #ef4444; /* red-500 */
+            --accent-blue: #60a5fa; /* blue-400 */
+            --accent-yellow: #facc15; /* yellow-400 */
+            --accent-purple: #c084fc; /* purple-400 */
+            --button-primary-bg: var(--accent-amber);
+            --button-primary-hover-bg: #d97706; /* amber-600 */
+            --button-secondary-bg: var(--accent-lime);
+            --button-secondary-hover-bg: #4d7c0f; /* lime-700 */
+          }
+          html.theme-earth body { background-color: var(--bg-primary); color: var(--text-primary); }
+          html.theme-earth ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+          html.theme-earth ::-webkit-scrollbar-thumb { background: var(--border-primary); }
+          html.theme-earth ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+          /* Pastel Theme */
+          html.theme-pastel {
+            --bg-primary: #eff6ff; /* blue-50 */
+            --bg-secondary: #f5f3ff; /* violet-50 */
+            --bg-tertiary: #fdf2f8; /* pink-50 */
+            --bg-tertiary-hover: #fbcfe8; /* pink-100 */
+            --text-primary: #374151; /* gray-700 */
+            --text-secondary: #4b5563; /* gray-600 */
+            --text-muted: #6b7280; /* gray-500 */
+            --border-primary: #d1d5db; /* gray-300 */
+            --border-secondary: #9ca3af; /* gray-400 */
+            --accent-sky: #7dd3fc; /* sky-300 */
+            --accent-violet: #c4b5fd; /* violet-300 */
+            --accent-teal: var(--accent-violet); /* Re-map teal to violet for pastel */
+            --accent-green: #a7f3d0; /* green-200 */
+            --accent-red: #fda4af; /* rose-300 */
+            --accent-blue: #93c5fd; /* blue-300 */
+            --accent-yellow: #fde047; /* yellow-300 */
+            --accent-purple: #d8b4fe; /* purple-400 */
+            --button-primary-bg: var(--accent-sky);
+            --button-primary-hover-bg: #38bdf8; /* sky-400 */
+            --button-secondary-bg: var(--accent-violet);
+            --button-secondary-hover-bg: #a78bfa; /* violet-400 */
+          }
+          html.theme-pastel body { background-color: var(--bg-primary); color: var(--text-primary); }
+          html.theme-pastel ::-webkit-scrollbar-track { background: var(--bg-tertiary); }
+          html.theme-pastel ::-webkit-scrollbar-thumb { background: var(--border-secondary); }
+          html.theme-pastel ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+          /* Generic Overrides based on CSS variables */
+          .bg-primary { background-color: var(--bg-primary) !important; }
+          .bg-secondary { background-color: var(--bg-secondary) !important; }
+          .bg-tertiary { background-color: var(--bg-tertiary) !important; }
+          .hover\\:bg-tertiary-hover:hover { background-color: var(--bg-tertiary-hover) !important; }
+          .text-primary { color: var(--text-primary) !important; }
+          .text-secondary { color: var(--text-secondary) !important; }
+          .text-muted { color: var(--text-muted) !important; }
+          .border-primary { border-color: var(--border-primary) !important; }
+          .border-secondary { border-color: var(--border-secondary) !important; }
+          
+          .accent-sky-text { color: var(--accent-sky) !important; }
+          .accent-teal-text { color: var(--accent-teal) !important; }
+          .accent-green-text { color: var(--accent-green) !important; }
+          .accent-red-text { color: var(--accent-red) !important; }
+          .accent-blue-text { color: var(--accent-blue) !important; }
+          .accent-yellow-text { color: var(--accent-yellow) !important; }
+          .accent-purple-text { color: var(--accent-purple) !important; }
+
+          .accent-sky-bg { background-color: var(--accent-sky) !important; color: var(--text-primary) !important; }
+          .accent-sky-bg-hover:hover { background-color: var(--button-primary-hover-bg) !important; }
+          .hover\\:accent-sky-bg-hover:hover { background-color: var(--button-primary-hover-bg) !important; } /* Ensure hover on buttons with variable bg */
+          .accent-teal-bg { background-color: var(--accent-teal) !important; }
+          .accent-teal-bg-hover:hover { background-color: var(--button-secondary-hover-bg) !important; }
+          .hover\\:accent-teal-bg-hover:hover { background-color: var(--button-secondary-hover-bg) !important; }
+          .accent-green-bg { background-color: var(--accent-green) !important; }
+          .accent-red-bg { background-color: var(--accent-red) !important; }
+          .accent-blue-bg { background-color: var(--accent-blue) !important; }
+          .accent-purple-bg { background-color: var(--accent-purple) !important; }
+
+
+          /* Overriding Tailwind classes: This list needs to be comprehensive for all themes */
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-slate-900 { background-color: var(--bg-primary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-slate-100 { color: var(--text-primary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-slate-800 { background-color: var(--bg-secondary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-slate-800\\/80 { background-color: color-mix(in srgb, var(--bg-secondary) 80%, transparent) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-slate-800\\/50 { background-color: color-mix(in srgb, var(--bg-secondary) 50%, transparent) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-slate-700 { background-color: var(--bg-tertiary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .hover\\:bg-slate-600:hover { background-color: var(--bg-tertiary-hover) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .hover\\:bg-slate-600\\/70:hover { background-color: color-mix(in srgb, var(--bg-tertiary-hover) 70%, transparent) !important;}
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-slate-700\\/70 { background-color: color-mix(in srgb, var(--bg-tertiary) 70%, transparent) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-slate-600 { background-color: color-mix(in srgb, var(--bg-tertiary) 90%, black 5%) !important; /* A bit darker than tertiary */ }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .hover\\:bg-slate-500:hover { background-color: color-mix(in srgb, var(--bg-tertiary-hover) 90%, black 5%) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-slate-600\\/50 { background-color: color-mix(in srgb, var(--bg-tertiary) 45%, black 2.5%, transparent) !important; }
+
+
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-slate-200 { color: var(--text-primary) !important; } /* was text-slate-100 for dark */
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-slate-300 { color: var(--text-secondary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-slate-400 { color: var(--text-muted) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-slate-500 { color: color-mix(in srgb, var(--text-muted) 90%, var(--bg-primary) 10%) !important; }
+          
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .border-slate-700 { border-color: var(--border-secondary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .border-slate-600 { border-color: var(--border-primary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .border-slate-500 { border-color: color-mix(in srgb, var(--border-primary) 80%, var(--bg-tertiary)) !important; }
+
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-sky-400 { color: var(--accent-sky) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-sky-300 { color: color-mix(in srgb, var(--accent-sky) 85%, var(--text-primary)) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .hover\\:text-sky-300:hover { color: color-mix(in srgb, var(--accent-sky) 80%, var(--text-primary)) !important; }
+          /* Ensure text-white or similar is used for light-on-dark button text */
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-sky-600 { background-color: var(--accent-sky) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-sky-600.text-white { color: var(--bg-primary) !important; }
+
+
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .hover\\:bg-sky-500:hover { background-color: var(--button-primary-hover-bg) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .focus\\:ring-sky-500:focus { ring-color: var(--accent-sky) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .focus\\:border-sky-500:focus { border-color: var(--accent-sky) !important; }
+
+
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-teal-400 { color: var(--accent-teal) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-teal-300 { color: color-mix(in srgb, var(--accent-teal) 85%, var(--text-primary)) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-teal-600 { background-color: var(--accent-teal) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-teal-600.text-white { color: var(--bg-primary) !important; }
+
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .hover\\:bg-teal-500:hover { background-color: var(--button-secondary-hover-bg) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .focus\\:ring-teal-500:focus { ring-color: var(--accent-teal) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .focus\\:border-teal-500:focus { border-color: var(--accent-teal) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-teal-500 { background-color: var(--button-secondary-bg) !important; /* For active heading button */ }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-teal-500.text-white { color: var(--bg-primary) !important; }
+
+
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-green-600 { background-color: var(--accent-green) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-green-600.text-white { color: var(--bg-primary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .hover\\:bg-green-500:hover { background-color: color-mix(in srgb, var(--accent-green) 80%, black) !important; }
+          
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-red-400 { color: var(--accent-red) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .hover\\:text-red-300:hover { color: color-mix(in srgb, var(--accent-red) 80%, black) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-red-600 { background-color: var(--accent-red) !important; }
+           :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-red-600.text-white { color: var(--bg-primary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .hover\\:bg-red-500:hover { background-color: color-mix(in srgb, var(--accent-red) 80%, black) !important; }
+
+
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-blue-600 { background-color: var(--accent-blue) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-blue-600.text-white { color: var(--bg-primary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .hover\\:bg-blue-500:hover { background-color: color-mix(in srgb, var(--accent-blue) 80%, black) !important; }
+          
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-yellow-400 { color: var(--accent-yellow) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-purple-400 { color: var(--accent-purple) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-purple-600 { background-color: var(--accent-purple) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-purple-600.text-white { color: var(--bg-primary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .hover\\:bg-purple-500:hover { background-color: color-mix(in srgb, var(--accent-purple) 80%, black) !important; }
+
+
+          /* PlayLog specific color overrides */
+          html.theme-light .text-red-400 { color: #ef4444 !important; } /* red-500 */
+          html.theme-light .text-blue-400 { color: #3b82f6 !important; } /* blue-500 */
+          html.theme-light .text-green-400 { color: #22c55e !important; } /* green-500 */
+          html.theme-light .text-yellow-400 { color: #eab308 !important; } /* yellow-500 */
+          html.theme-light .text-purple-400 { color: #a855f7 !important; } /* purple-500 */
+
+          html.theme-earth .text-red-400 { color: #f87171 !important; } 
+          html.theme-earth .text-blue-400 { color: #93c5fd !important; }
+          html.theme-earth .text-green-400 { color: #86efac !important; }
+          html.theme-earth .text-yellow-400 { color: #fef08a !important; }
+          html.theme-earth .text-purple-400 { color: #e9d5ff !important; }
+
+          html.theme-pastel .text-red-400 { color: #fb7185 !important; } /* rose-400 */
+          html.theme-pastel .text-blue-400 { color: #60a5fa !important; } /* sky-400 */
+          html.theme-pastel .text-green-400 { color: #4ade80 !important; } /* green-400 */
+          html.theme-pastel .text-yellow-400 { color: #facc15 !important; } /* yellow-400 */
+          html.theme-pastel .text-purple-400 { color: #c084fc !important; } /* purple-400 */
+
+          /* Fix for DiceRoller specific error/warning messages */
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-yellow-900\\/50 { background-color: color-mix(in srgb, var(--accent-yellow) 20%, transparent) !important; border-color: var(--accent-yellow) !important; color: var(--text-primary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-yellow-300 { color: var(--accent-yellow) !important; }
+
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .bg-red-900\\/50 { background-color: color-mix(in srgb, var(--accent-red) 20%, transparent) !important; border-color: var(--accent-red) !important; color: var(--text-primary) !important; }
+          :is(html.theme-light, html.theme-earth, html.theme-pastel) .text-red-300 { color: var(--accent-red) !important; }
+
+          .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+          .custom-scrollbar::-webkit-scrollbar-track { background: var(--bg-tertiary); border-radius:3px; }
+          .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-primary); border-radius: 3px; }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+          .rulebook-section-list-item, .gde-list-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-primary);
+            cursor: pointer;
+            transition: background-color 0.2s;
+          }
+          .rulebook-section-list-item:hover, .gde-list-item:hover {
+            background-color: var(--bg-tertiary-hover);
+          }
+          .rulebook-section-list-item.selected, .gde-list-item.selected {
+            background-color: var(--accent-sky);
+            color: var(--text-primary) !important; /* Ensure text is readable on accent bg */
+          }
+           .rulebook-section-list-item.selected .text-muted, .gde-list-item.selected .text-muted { /* for icons in selected item */
+            color: var(--text-primary) !important;
+          }
+        </style>
+      <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+      <body>
+        <div id="root"></div>
+
+        <!-- Global UMD Libraries needed by components (e.g., PlayLog for PDF export) -->
+        <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+        <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+        <script defer src="./index.js"></script>
+      <script type="module" src="/index.tsx"></script>
+</body>
+    </html>
